@@ -12,6 +12,20 @@ enum LocationFailure {
   unknown,
 }
 
+/// نتيجة طلب إذن الموقع، منفصلة عن نتيجة تحديد الموقع نفسه.
+class PermissionResult {
+  const PermissionResult.granted()
+      : failure = null,
+        message = null;
+
+  const PermissionResult.denied(this.failure, this.message);
+
+  final LocationFailure? failure;
+  final String? message;
+
+  bool get isGranted => failure == null;
+}
+
 /// نتيجة محاولة تحديد الموقع: إمّا إحداثيات، أو سبب فشل مع رسالة عربية.
 class LocationResult {
   LocationResult.success(this.position)
@@ -32,12 +46,12 @@ class LocationResult {
 /// معزولة عن الواجهة عمداً: الواجهة لا تعرف شيئاً عن حزمة geolocator،
 /// فإذا تغيّرت الحزمة لاحقاً نعدّل هذا الملف فقط.
 class LocationService {
-  /// يطلب الإذن عند الحاجة فقط، ثم يعيد موقعاً واحداً بدقة عالية.
-  Future<LocationResult> currentPosition() async {
+  /// يتحقق من خدمة الموقع والإذن، ويطلبه عند الحاجة فقط.
+  Future<PermissionResult> ensurePermission() async {
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        return LocationResult.failure(
+        return const PermissionResult.denied(
           LocationFailure.serviceDisabled,
           'خدمة الموقع مغلقة في الجهاز. افتحها ثم أعد المحاولة.',
         );
@@ -48,18 +62,45 @@ class LocationService {
         permission = await Geolocator.requestPermission();
       }
       if (permission == LocationPermission.denied) {
-        return LocationResult.failure(
+        return const PermissionResult.denied(
           LocationFailure.permissionDenied,
           'لم تمنح إذن الموقع. لا يمكن تحديد موقعك بدونه.',
         );
       }
       if (permission == LocationPermission.deniedForever) {
-        return LocationResult.failure(
+        return const PermissionResult.denied(
           LocationFailure.permissionDeniedForever,
           'إذن الموقع مرفوض نهائياً. افتح إعدادات التطبيق وامنحه يدوياً.',
         );
       }
 
+      return const PermissionResult.granted();
+    } on LocationServiceDisabledException {
+      return const PermissionResult.denied(
+        LocationFailure.serviceDisabled,
+        'خدمة الموقع مغلقة في الجهاز. افتحها ثم أعد المحاولة.',
+      );
+    } on PermissionDeniedException {
+      return const PermissionResult.denied(
+        LocationFailure.permissionDenied,
+        'لم تمنح إذن الموقع. لا يمكن تحديد موقعك بدونه.',
+      );
+    } catch (error) {
+      return PermissionResult.denied(
+        LocationFailure.unknown,
+        'تعذّر التحقق من إذن الموقع: $error',
+      );
+    }
+  }
+
+  /// يطلب الإذن عند الحاجة فقط، ثم يعيد موقعاً واحداً بدقة عالية.
+  Future<LocationResult> currentPosition() async {
+    final permission = await ensurePermission();
+    if (!permission.isGranted) {
+      return LocationResult.failure(permission.failure, permission.message);
+    }
+
+    try {
       final position = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
           accuracy: LocationAccuracy.high,
@@ -88,6 +129,19 @@ class LocationService {
         'تعذّر تحديد الموقع: $error',
       );
     }
+  }
+
+  /// بثّ موقع لتسجيل رحلة في المقدمة فقط.
+  ///
+  /// المستدعي مسؤول عن إلغاء الاشتراك؛ لا يعمل هذا في الخلفية ولا بعد
+  /// إغلاق التطبيق.
+  Stream<Position> positionStream({int distanceFilterMeters = 8}) {
+    return Geolocator.getPositionStream(
+      locationSettings: LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: distanceFilterMeters,
+      ),
+    );
   }
 
   /// يفتح إعدادات التطبيق (تُستخدم عند رفض الإذن نهائياً).

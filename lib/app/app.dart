@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 import '../core/config/app_config.dart';
-import '../features/map/presentation/map_screen.dart';
 import '../features/onboarding/presentation/onboarding_screen.dart';
 import '../features/settings/presentation/preferences_controller.dart';
 import '../features/settings/presentation/preferences_scope.dart';
 import 'app_theme.dart';
+import 'home_shell.dart';
 
 /// جذر التطبيق: اللغة العربية، اتجاه RTL، والسمة العامة.
 ///
@@ -50,7 +50,7 @@ class _RootGate extends StatelessWidget {
     final controller = PreferencesScope.of(context);
 
     return controller.preferences.onboardingCompleted
-        ? const MapScreen()
+        ? const HomeShell()
         : OnboardingScreen(controller: controller);
   }
 }
