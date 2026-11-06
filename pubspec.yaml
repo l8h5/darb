@@ -39,7 +39,10 @@ dependencies:
   geolocator: ^14.1.2
   # عميل HTTP مخصّص لضبط عدد الاتصالات المتزامنة عند جلب البلاطات.
   http: ^1.6.0
-  # تخزين محلي بسيط للأماكن المحفوظة (بدون سيرفر).
+  # قاعدة بيانات الكشتات المحلية (بدون سيرفر).
+  sqflite: ^2.4.2
+  path: ^1.9.1
+  # تفضيلات المستخدم + ترحيل بيانات الإصدار السابق (JSON → SQLite).
   shared_preferences: ^2.5.6
   flutter_localizations:
     sdk: flutter
@@ -54,6 +57,9 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+
+  # SQLite على سطح المكتب أثناء الاختبارات (لا يدخل في التطبيق).
+  sqflite_common_ffi: ^2.3.6
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

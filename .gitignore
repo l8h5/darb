@@ -1,3 +1,8 @@
+# أسرار البيئة — لا تُرفع أبداً
+.env
+.env.*
+!.env.example
+
 # Miscellaneous
 *.class
 *.log

@@ -1,4 +1,5 @@
-import 'package:darb_hail/core/app_config.dart';
+import 'package:darb_hail/core/config/app_config.dart';
+import 'package:darb_hail/features/map/domain/map_layer.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -24,11 +25,19 @@ void main() {
       );
     });
 
-    test('قالب بلاطات OSM صحيح', () {
-      expect(AppConfig.osmTileUrl, startsWith('https://'));
-      expect(AppConfig.osmTileUrl, contains('{z}'));
-      expect(AppConfig.osmTileUrl, contains('{x}'));
-      expect(AppConfig.osmTileUrl, contains('{y}'));
+    test('قوالب بلاطات الطبقات صحيحة', () {
+      for (final layer in MapLayer.values) {
+        expect(layer.urlTemplate, startsWith('https://'));
+        expect(layer.urlTemplate, contains('{z}'));
+        expect(layer.urlTemplate, contains('{x}'));
+        expect(layer.urlTemplate, contains('{y}'));
+        expect(layer.attribution.trim(), isNotEmpty);
+        // قد يكون أعلى من maxZoom لأن الخريطة تمدّ آخر مستوى متاح.
+        expect(
+          layer.maxNativeZoom,
+          greaterThanOrEqualTo(AppConfig.minZoom.toInt()),
+        );
+      }
     });
 
     test('معرّف User-Agent غير فارغ', () {

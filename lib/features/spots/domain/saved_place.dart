@@ -24,6 +24,15 @@ class SavedPlace {
 
   LatLng get point => LatLng(latitude, longitude);
 
+  /// نسخة معدّلة من المكان مع الحفاظ على المعرّف وتاريخ الإنشاء.
+  SavedPlace copyWith({String? name}) => SavedPlace(
+        id: id,
+        name: name ?? this.name,
+        latitude: latitude,
+        longitude: longitude,
+        createdAt: createdAt,
+      );
+
   /// يُنشئ مكاناً جديداً بمعرّف من الوقت الحالي + عدّاد.
   ///
   /// لا نحتاج مكتبة UUID: المعرّف محلي فقط. لكن الوقت وحده لا يكفي لأن
